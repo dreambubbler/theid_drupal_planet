@@ -1,0 +1,82 @@
+id: theid_drupal_planet
+label: 'The ID. Drupal Planet'
+status: true
+
+source:
+  plugin: url
+  data_fetcher_plugin: http
+  urls: 'https://www.drupal.org/planet/rss.xml'
+  data_parser_plugin: simple_xml
+
+  item_selector: /rss/channel/item
+  fields:
+    # -
+    #   name: guid
+    #   label: GUID
+    #   selector: guid
+    -
+      name: title
+      label: Title
+      selector: title
+    -
+      name: pub_date
+      label: 'Publication date'
+      selector: pubDate
+    -
+      name: link
+      label: 'Origin link'
+      selector: link
+    -
+      name: description
+      label: Description
+      selector: 'description'
+    # -
+    #   name: image
+    #   label: Image
+    #   selector: 'itunes:image[''href'']'
+
+  ids:
+    link:
+      type: string
+
+  constants:
+      restricted_html: restricted_html
+      full_html: full_html
+
+destination:
+  plugin: 'entity:node'
+
+process:
+  title: title
+  field_remote_url: link
+
+  'body/value': description
+  'body/format': constants/full_html
+
+  created:
+    plugin: format_date
+    from_format: 'D, d M Y H:i:s O'
+    to_format: 'U'
+    source: pub_date
+  status:
+    plugin: default_value
+    default_value: 1
+  type:
+    plugin: default_value
+    default_value: data_source_rss_item
+#  field_keywords_txt:
+#    plugin: keywordsnlp
+#    source: link
+  field_keywords_nlp:
+    -
+      plugin: keywordsnlp
+      source: link
+    -
+      plugin: explode
+      delimiter: '|||'
+    -
+      plugin: entity_generate
+      entity_type: taxonomy_term
+      bundle_key: vid
+      bundle: nlp_keywords
+      value_key: name
